@@ -9,7 +9,7 @@
 
 This project was inspired by and built upon the encouragement of **[Yin-renlong](https://github.com/yin-renlong)**, whose interactive damage-assessment map for the Venezuela earthquake is genuinely impressive work — clear, fast, and built for the people who need it most.
 
-His dashboard ([venezuela-earthquake-copernicus-data-dashboard-2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12)) made me wonder: what if there were a companion tool on the *field* side — something a rescue team could carry offline, without relying on a server or a stable connection? That question is what this repo tries to answer, however roughly.
+His dashboard — **[🗺️ Venezuela Earthquake Copernicus Data Dashboard 2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12)** — made me wonder: what if there were a companion tool on the *field* side — something a rescue team could carry offline, without relying on a server or a stable connection? That question is what this repo tries to answer, however roughly.
 
 Thank you, Yin-renlong. The map is excellent. This is just one more layer trying to be useful.
 
