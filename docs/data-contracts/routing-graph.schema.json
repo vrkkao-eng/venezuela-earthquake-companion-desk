@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "routing-graph.schema.json",
+  "title": "RoutingGraph",
+  "description": "Input graph for Module C offline tactical routing. Nodes are map positions with grid coordinates; edges are directional connections with terrain-aware cost multipliers. The worker computes Dijkstra/A* over this structure — do not pass pre-computed paths.",
+  "type": "object",
+  "required": ["nodes", "edges", "mode"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "description": "All navigable positions. gridX/gridY are integer pixel-space grid coordinates used for A* heuristic distance. lat/lon are WGS-84 degrees (signed float) for display only.",
+      "items": {
+        "type": "object",
+        "required": ["id", "gridX", "gridY", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "gridX": { "type": "integer" },
+          "gridY": { "type": "integer" },
+          "lat": { "type": "number" },
+          "lon": { "type": "number" },
+          "label": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["clear", "damaged", "blocked"],
+            "description": "clear = passable; damaged = passable with cost penalty; blocked = near-impassable (high cost, not zero)"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Directed edges. Cost = euclidean grid distance × terrain weight for the destination node status × vehicle weight modifier.",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "type": "string", "description": "Source node id" },
+          "to": { "type": "string", "description": "Destination node id" },
+          "baseCost": {
+            "type": "number",
+            "description": "Optional override for base traversal cost. If omitted, use euclidean distance between gridX/gridY of from and to nodes."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["infantry", "armored"],
+      "description": "Vehicle mode determines terrain weight multipliers. infantry: blocked×100, damaged×50, clear×1. armored: blocked×10, damaged×1, clear×1."
+    },
+    "startId": {
+      "type": "string",
+      "description": "Node id of the route start point."
+    },
+    "endId": {
+      "type": "string",
+      "description": "Node id of the route end point."
+    }
+  },
+  "additionalProperties": false,
+  "_terrainWeights": {
+    "description": "Canonical weight table — do not modify without flagging to orchestrator and updating agent-routing.md.",
+    "infantry": { "clear": 1, "damaged": 50, "blocked": 100 },
+    "armored":  { "clear": 1, "damaged": 1,  "blocked": 10  }
+  }
+}

@@ -1,0 +1,7 @@
+# TLE snapshot for Sentinel-1A (NORAD 39634)
+# Fetched:  2026-06-26T03:28:15Z from https://tle.ivanstanojevic.me/api/tle/39634
+# Valid for reliable predictions until approximately: 2026-07-03 (7 days from epoch)
+# To refresh: fetch https://tle.ivanstanojevic.me/api/tle/39634 and update the three lines below
+SENTINEL-1A
+1 39634U 14016A   26177.14462956 -.00000209  00000+0 -34694-4 0  9999
+2 39634  98.1781 184.5464 0001370  83.0517 277.0838 14.59199694651327

@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "building-record.schema.json",
+  "title": "BuildingRecord",
+  "description": "Canonical in-memory representation of a building assessed during earthquake response. Shared by Module A (codec), Module B (digital-twin/shadow), and Module D (forensic-audit). Coordinates are always signed floats — negative lat = south, negative lon = west.",
+  "type": "object",
+  "required": ["id", "lat", "lon", "status", "heightM"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "maxLength": 6,
+      "description": "Short alphanumeric building identifier, max 6 chars (codec wire format constraint)."
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90,
+      "description": "WGS-84 latitude in signed decimal degrees. Negative = south hemisphere."
+    },
+    "lon": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180,
+      "description": "WGS-84 longitude in signed decimal degrees. Negative = west of prime meridian."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["green", "yellow", "red", "unknown"],
+      "description": "Structural assessment: green=safe, yellow=damaged/assess, red=blocked/unsafe, unknown=not yet assessed."
+    },
+    "heightM": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 999,
+      "description": "Estimated building height in metres. Used by Module B for shadow length calculation."
+    },
+    "anomaly": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only when an operator has manually flagged a discrepancy via the in-app anomaly form. Must NOT be set by any automated scraper or external API call."
+    },
+    "label": {
+      "type": "string",
+      "description": "Optional human-readable name for display."
+    },
+    "floors": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional floor count for display/audit."
+    }
+  },
+  "additionalProperties": false
+}

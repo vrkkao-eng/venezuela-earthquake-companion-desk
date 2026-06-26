@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "codec-wire-format.schema.json",
+  "title": "CodecWireFormat",
+  "description": "Fixed-width alphanumeric wire format for transmitting building records over low-bandwidth radio (AFSK/codec path). Every field has a fixed character width so decode is unambiguous without delimiters. Coordinates are stored as signed integers (degrees × 100000) to preserve sign — never use Math.abs on lat or lon.",
+  "type": "object",
+  "properties": {
+    "_wireFormat": {
+      "description": "Total encoded string layout (all fields concatenated, no separators). Total = 32 characters.",
+      "fields": [
+        { "name": "id",        "chars": 6,  "encoding": "alphanumeric, left-padded with '0'", "example": "BLD042" },
+        { "name": "latSign",   "chars": 1,  "encoding": "'N' or 'S'", "example": "N" },
+        { "name": "latAbs",    "chars": 7,  "encoding": "abs(lat × 100000), zero-padded decimal integer", "example": "1075300" },
+        { "name": "lonSign",   "chars": 1,  "encoding": "'E' or 'W'", "example": "W" },
+        { "name": "lonAbs",    "chars": 8,  "encoding": "abs(lon × 100000), zero-padded decimal integer", "example": "06674200" },
+        { "name": "status",    "chars": 1,  "encoding": "G=green/safe, Y=yellow/damaged, R=red/blocked, U=unknown", "example": "Y" },
+        { "name": "height",    "chars": 3,  "encoding": "integer metres, zero-padded, max 999", "example": "012" },
+        { "name": "anomaly",   "chars": 1,  "encoding": "1=crowdsourced anomaly flagged by operator, 0=none", "example": "0" },
+        { "name": "checksum",  "chars": 4,  "encoding": "sum of all preceding character codes mod 65536, zero-padded 4-digit hex", "example": "3A7F" }
+      ],
+      "totalChars": 32
+    }
+  },
+  "buildingRecord": {
+    "type": "object",
+    "description": "In-memory representation before encoding / after decoding.",
+    "required": ["id", "lat", "lon", "status", "heightM"],
+    "properties": {
+      "id":       { "type": "string",  "description": "Building identifier, up to 6 characters" },
+      "lat":      { "type": "number",  "description": "WGS-84 latitude, signed float degrees. Negative = south. NEVER store as abs." },
+      "lon":      { "type": "number",  "description": "WGS-84 longitude, signed float degrees. Negative = west. NEVER store as abs." },
+      "status":   { "type": "string",  "enum": ["green", "yellow", "red", "unknown"] },
+      "heightM":  { "type": "integer", "description": "Building height in metres, 0–999" },
+      "anomaly":  { "type": "boolean", "description": "True if an operator has manually flagged a crowdsourced anomaly via the in-app form. Never set from external API." }
+    }
+  },
+  "_coordinateTolerance": "±0.00001 degrees (one unit of the ×100000 integer quantization) is acceptable round-trip error for lat/lon. id, status, anomaly must be bit-exact.",
+  "_prohibitedPatterns": [
+    "Math.abs(lat) or Math.abs(lon) anywhere in encode or decode path",
+    "Variable-length lat/lon fields (always use fixed widths as specified above)",
+    "Decode that only reads status and ignores coordinates"
+  ]
+}

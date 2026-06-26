@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venezuela Earthquake Companion Desk — EMSR884</title>
+  <style>
+    /* ── Design tokens ────────────────────────────────────────────────── */
+    :root {
+      --bg:          #0a0e14;
+      --surface:     #111820;
+      --surface2:    #1a2230;
+      --border:      #2a3a4a;
+      --neon-blue:   #00c8ff;
+      --neon-green:  #00ff88;
+      --neon-yellow: #ffd700;
+      --neon-red:    #ff4444;
+      --text:        #d0e0f0;
+      --text-dim:    #607080;
+      --font-mono:   'Courier New', Courier, monospace;
+      --radius:      6px;
+    }
+
+    /* ── Reset & base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    #app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--neon-blue);
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #app-title {
+      color: var(--neon-blue);
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+    }
+
+    #emsr-badge {
+      background: var(--neon-blue);
+      color: #000;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    #lang-switcher {
+      display: flex;
+      gap: 4px;
+    }
+
+    .lang-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .lang-btn:hover     { border-color: var(--neon-blue); color: var(--text); }
+    .lang-btn.active    { border-color: var(--neon-blue); color: var(--neon-blue); }
+
+    /* ── Panel grid ───────────────────────────────────────────────────── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-title {
+      color: var(--neon-blue);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Form elements ────────────────────────────────────────────────── */
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    label {
+      color: var(--text-dim);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 4px 7px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--neon-blue);
+    }
+
+    input[type="number"] { width: 72px; }
+    input[type="text"]   { width: 120px; }
+    input.wide           { width: 100%; }
+    textarea             { width: 100%; resize: vertical; min-height: 60px; }
+
+    input[type="checkbox"] { accent-color: var(--neon-blue); }
+
+    /* ── Buttons ──────────────────────────────────────────────────────── */
+    button {
+      background: var(--surface2);
+      border: 1px solid var(--neon-blue);
+      border-radius: 3px;
+      color: var(--neon-blue);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 5px 14px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    button:hover   { background: #1a2d3a; }
+    button:active  { background: #223344; }
+    button.danger  { border-color: var(--neon-red);    color: var(--neon-red); }
+    button.success { border-color: var(--neon-green);  color: var(--neon-green); }
+
+    /* ── Output boxes ─────────────────────────────────────────────────── */
+    .output {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--neon-green);
+      font-size: 12px;
+      min-height: 36px;
+      padding: 7px 10px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .output.warn  { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+    .output.error { color: var(--neon-red);    border-color: var(--neon-red); }
+    .output.info  { color: var(--text-dim); }
+
+    /* ── Status chips ─────────────────────────────────────────────────── */
+    .chip {
+      display: inline-block;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 1px 8px;
+    }
+    .chip-green   { background: #00ff8820; color: var(--neon-green); border: 1px solid var(--neon-green); }
+    .chip-yellow  { background: #ffd70020; color: var(--neon-yellow); border: 1px solid var(--neon-yellow); }
+    .chip-red     { background: #ff444420; color: var(--neon-red);    border: 1px solid var(--neon-red); }
+    .chip-unknown { background: #60708020; color: var(--text-dim);    border: 1px solid var(--text-dim); }
+
+    /* ── Shadow canvas ────────────────────────────────────────────────── */
+    #shadow-canvas {
+      background: #0d1520;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      height: 220px;
+    }
+
+    /* ── Routing node graph ───────────────────────────────────────────── */
+    #route-canvas {
+      background: #0d1520;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: block;
+      width: 100%;
+      height: 180px;
+    }
+
+    /* ── Anomaly list ─────────────────────────────────────────────────── */
+    #anomaly-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .anomaly-entry {
+      background: var(--surface2);
+      border: 1px solid var(--neon-yellow);
+      border-radius: 3px;
+      color: var(--neon-yellow);
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+
+    /* ── Orbit status ─────────────────────────────────────────────────── */
+    #orbit-status {
+      font-size: 13px;
+    }
+
+    /* ── Mode toggle ─────────────────────────────────────────────────── */
+    .toggle-group {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .toggle-group button {
+      border: none;
+      border-radius: 0;
+      border-right: 1px solid var(--border);
+      flex: 1;
+      padding: 4px 10px;
+    }
+    .toggle-group button:last-child { border-right: none; }
+    .toggle-group button.active {
+      background: #1a2d3a;
+      color: var(--neon-blue);
+    }
+
+    /* ── Scrollbar ────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar            { width: 6px; }
+    ::-webkit-scrollbar-track      { background: var(--surface); }
+    ::-webkit-scrollbar-thumb      { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════════════════════ -->
+<header id="app-header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="emsr-badge">EMSR884</span>
+    <span id="app-title" data-i18n-key="header">Venezuela Earthquake Companion Desk — EMSR884</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <label data-i18n-key="labelLanguage" style="color:var(--text-dim);font-size:11px">Language</label>
+    <div id="lang-switcher">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn"        data-lang="es">ES</button>
+      <button class="lang-btn"        data-lang="fr">FR</button>
+      <button class="lang-btn"        data-lang="it">IT</button>
+      <button class="lang-btn"        data-lang="zh">ZH</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ PANELS ═══════════════════════════════════════════════════════════════ -->
+<div id="grid">
+
+  <!-- ── Panel C: Tactical Routing ──────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelRouting">Tactical Routing</div>
+
+    <div class="row">
+      <label data-i18n-key="modeInfantry">Infantry</label>
+      <div class="toggle-group" id="mode-toggle">
+        <button class="active" data-mode="infantry" data-i18n-key="modeInfantry">Infantry</button>
+        <button                data-mode="armored"  data-i18n-key="modeArmored">Armored</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label data-i18n-key="labelStart">Start node</label>
+      <select id="route-start"></select>
+      <label data-i18n-key="labelEnd">End node</label>
+      <select id="route-end"></select>
+    </div>
+
+    <button id="btn-route" data-i18n-key="btnCalculateRoute">Calculate Route</button>
+
+    <canvas id="route-canvas" width="700" height="180"></canvas>
+
+    <div class="row">
+      <span data-i18n-key="routeResult" style="color:var(--text-dim)">Route:</span>
+      <div id="route-output" class="output" style="flex:1;min-height:28px"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel A: Radio Codec ────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelCodec">Radio Codec (Module A)</div>
+
+    <!-- Encode -->
+    <div class="row">
+      <label data-i18n-key="labelBuilding">Building ID</label>
+      <input type="text" id="codec-id" maxlength="6"
+             data-i18n-placeholder="placeholderBuildingId" placeholder="e.g. BLD042"
+             style="width:90px">
+      <label data-i18n-key="labelLat">Latitude</label>
+      <input type="number" id="codec-lat" value="10.48" step="0.00001" min="-90"  max="90">
+      <label data-i18n-key="labelLon">Longitude</label>
+      <input type="number" id="codec-lon" value="-66.88" step="0.00001" min="-180" max="180">
+    </div>
+
+    <div class="row">
+      <label data-i18n-key="labelStatus">Status</label>
+      <select id="codec-status">
+        <option value="green"   data-i18n-key="statusGreen">Safe</option>
+        <option value="yellow" selected data-i18n-key="statusYellow">Damaged</option>
+        <option value="red"     data-i18n-key="statusRed">Blocked</option>
+        <option value="unknown" data-i18n-key="statusUnknown">Unknown</option>
+      </select>
+      <label data-i18n-key="labelHeight">Height (m)</label>
+      <input type="number" id="codec-height" value="12" min="0" max="999" style="width:62px">
+      <input type="checkbox" id="codec-anomaly">
+      <label for="codec-anomaly" data-i18n-key="btnFlagAnomaly">Flag Anomaly</label>
+    </div>
+
+    <button id="btn-encode" data-i18n-key="btnEncode">Encode Record</button>
+
+    <div>
+      <div style="color:var(--text-dim);font-size:11px;margin-bottom:3px" data-i18n-key="encodedOutput">Encoded string:</div>
+      <div id="encode-output" class="output"></div>
+    </div>
+
+    <!-- Decode -->
+    <div style="border-top:1px solid var(--border);padding-top:10px">
+      <div class="row">
+        <input type="text" id="codec-wire" class="wide"
+               data-i18n-placeholder="placeholderEncodedStr"
+               placeholder="32-char encoded string" maxlength="32">
+      </div>
+      <button id="btn-decode" data-i18n-key="btnDecode" style="margin-top:6px">Decode Record</button>
+      <div style="color:var(--text-dim);font-size:11px;margin:6px 0 3px" data-i18n-key="decodedOutput">Decoded record:</div>
+      <div id="decode-output" class="output"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel A: AFSK Modem ─────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelCodec">AFSK Modem (Module A)</div>
+
+    <div class="row">
+      <input type="text" id="modem-text" class="wide"
+             value="VZ2026:TEST" placeholder="Text to transmit">
+    </div>
+
+    <div class="row">
+      <button id="btn-tx"           data-i18n-key="btnTransmit">Transmit (TX)</button>
+      <button id="btn-rx"           data-i18n-key="btnReceive">Start Receive (RX)</button>
+      <button id="btn-offline-test" class="success">Offline TX→RX Test</button>
+    </div>
+
+    <div style="color:var(--text-dim);font-size:11px">Log:</div>
+    <div id="modem-log" class="output info" style="max-height:120px;overflow-y:auto;font-size:11px"></div>
+  </div>
+
+  <!-- ── Panel B: Digital Twin / Shadow ─────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelDigitalTwin">Digital Twin / Shadow (Module B)</div>
+
+    <div class="row">
+      <label data-i18n-key="labelLat">Latitude</label>
+      <input type="number" id="shadow-lat" value="10.48" step="0.001" min="-90"  max="90">
+      <label data-i18n-key="labelLon">Longitude</label>
+      <input type="number" id="shadow-lon" value="-66.88" step="0.001" min="-180" max="180">
+    </div>
+
+    <div class="row">
+      <label data-i18n-key="labelHeight">Height (m)</label>
+      <input type="number" id="shadow-height" value="15" min="1" max="999" style="width:62px">
+      <label data-i18n-key="labelDate">Date</label>
+      <input type="date" id="shadow-date" value="2026-06-24">
+      <label data-i18n-key="labelHour">Hour (UTC)</label>
+      <input type="number" id="shadow-hour" value="14" min="0" max="23" style="width:54px">
+    </div>
+
+    <button id="btn-shadow">Calculate Shadow</button>
+
+    <canvas id="shadow-canvas" width="320" height="220"></canvas>
+
+    <div id="shadow-output" class="output info" style="font-size:11px"></div>
+  </div>
+
+  <!-- ── Panel D: Satellite Revisit ─────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelOrbit">Satellite Revisit (Module D)</div>
+
+    <div id="orbit-status" class="output warn">⏳ Loading TLE snapshot…</div>
+
+    <div id="orbit-passes" style="display:flex;flex-direction:column;gap:6px"></div>
+
+    <div style="color:var(--text-dim);font-size:10px;margin-top:4px" id="orbit-meta"></div>
+  </div>
+
+  <!-- ── Panel D: Anomaly Audit ──────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title" data-i18n-key="panelForensic">Anomaly Audit (Module D)</div>
+
+    <div style="color:var(--text-dim);font-size:11px">
+      Operator-entered flags only — no external API or scraper.
+    </div>
+
+    <div class="row">
+      <label data-i18n-key="labelBuilding">Building ID</label>
+      <input type="text" id="anomaly-id" placeholder="BLD042" style="width:90px">
+    </div>
+
+    <div>
+      <label data-i18n-key="labelStatus" style="display:block;margin-bottom:3px">Description</label>
+      <textarea id="anomaly-desc" placeholder="Describe the observed anomaly…" style="min-height:48px"></textarea>
+    </div>
+
+    <button id="btn-anomaly" data-i18n-key="btnFlagAnomaly">Flag Anomaly</button>
+
+    <div style="color:var(--text-dim);font-size:11px" data-i18n-key="anomalyNone">No anomalies flagged</div>
+    <div id="anomaly-list"></div>
+  </div>
+
+</div><!-- /#grid -->
+
+<!-- ═══ MODULES ══════════════════════════════════════════════════════════════ -->
+<script type="module">
+import { encode, decode, formatDecoded } from './modules/codec/codec.js';
+import { generateWaveform, decodeWaveform, SAMPLE_RATE } from './modules/modem/modem.js';
+import { buildingShadow } from './modules/digital-twin/solar.js';
+import { getNextPassDisplay, loadTLE, ORBIT_STATE } from './modules/orbit/orbit.js';
+import { setLanguage, t } from './modules/i18n/ui-bindings.js';
+import { aStar } from './modules/routing/routing-worker.js';
+
+// ── i18n ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setLanguage(btn.dataset.lang);
+  });
+});
+
+// ── Panel C: Routing ──────────────────────────────────────────────────────
+// Demo graph: 6-node urban scenario (Caracas area, fictional street grid)
+// Nodes represent intersections; terrain reflects post-earthquake conditions.
+const DEMO_GRAPH = {
+  nodes: [
+    { id: 'N0', label: 'Depot',     gridX:  30, gridY:  90, status: 'clear'   },
+    { id: 'N1', label: 'Plaza',     gridX: 160, gridY:  40, status: 'clear'   },
+    { id: 'N2', label: 'Hospital',  gridX: 300, gridY:  90, status: 'clear'   },
+    { id: 'N3', label: 'Bridge',    gridX: 160, gridY:  90, status: 'damaged'  },
+    { id: 'N4', label: 'Market',    gridX: 160, gridY: 140, status: 'blocked'  },
+    { id: 'N5', label: 'School',    gridX: 300, gridY: 140, status: 'damaged'  },
+  ],
+  edges: [
+    { from: 'N0', to: 'N1' }, { from: 'N1', to: 'N0' },
+    { from: 'N1', to: 'N2' }, { from: 'N2', to: 'N1' },
+    { from: 'N0', to: 'N3' }, { from: 'N3', to: 'N0' },
+    { from: 'N3', to: 'N2' }, { from: 'N2', to: 'N3' },
+    { from: 'N0', to: 'N4' }, { from: 'N4', to: 'N0' },
+    { from: 'N4', to: 'N5' }, { from: 'N5', to: 'N4' },
+    { from: 'N5', to: 'N2' }, { from: 'N2', to: 'N5' },
+    { from: 'N1', to: 'N3' }, { from: 'N3', to: 'N1' },
+  ],
+};
+
+const STATUS_COLOR = { clear: '#00ff88', damaged: '#ffd700', blocked: '#ff4444' };
+const NODE_RADIUS  = 14;
+
+function populateNodeSelects() {
+  const startSel = document.getElementById('route-start');
+  const endSel   = document.getElementById('route-end');
+  DEMO_GRAPH.nodes.forEach(n => {
+    startSel.add(new Option(n.label, n.id));
+    endSel.add(new Option(n.label, n.id));
+  });
+  startSel.value = 'N0';
+  endSel.value   = 'N2';
+}
+
+function drawRouteGraph(highlightPath = []) {
+  const canvas = document.getElementById('route-canvas');
+  const ctx    = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const nodeMap = Object.fromEntries(DEMO_GRAPH.nodes.map(n => [n.id, n]));
+
+  // Edges
+  ctx.strokeStyle = '#2a3a4a';
+  ctx.lineWidth   = 1.5;
+  const drawn = new Set();
+  for (const e of DEMO_GRAPH.edges) {
+    const key = [e.from, e.to].sort().join('-');
+    if (drawn.has(key)) continue;
+    drawn.add(key);
+    const a = nodeMap[e.from], b = nodeMap[e.to];
+    ctx.beginPath();
+    ctx.moveTo(a.gridX, a.gridY);
+    ctx.lineTo(b.gridX, b.gridY);
+    ctx.stroke();
+  }
+
+  // Highlight path edges
+  if (highlightPath.length >= 2) {
+    ctx.strokeStyle = '#00c8ff';
+    ctx.lineWidth   = 3;
+    for (let i = 0; i < highlightPath.length - 1; i++) {
+      const a = nodeMap[highlightPath[i]], b = nodeMap[highlightPath[i + 1]];
+      ctx.beginPath();
+      ctx.moveTo(a.gridX, a.gridY);
+      ctx.lineTo(b.gridX, b.gridY);
+      ctx.stroke();
+    }
+  }
+
+  // Nodes
+  for (const n of DEMO_GRAPH.nodes) {
+    const onPath = highlightPath.includes(n.id);
+    ctx.beginPath();
+    ctx.arc(n.gridX, n.gridY, NODE_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle   = onPath ? '#1a2d3a' : '#111820';
+    ctx.strokeStyle = STATUS_COLOR[n.status];
+    ctx.lineWidth   = onPath ? 3 : 1.5;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle  = onPath ? STATUS_COLOR[n.status] : '#607080';
+    ctx.font       = 'bold 9px Courier New';
+    ctx.textAlign  = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, n.gridX, n.gridY);
+  }
+
+  // Legend
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'left';
+  const leg = [['clear', 'Clear'], ['damaged', 'Damaged'], ['blocked', 'Blocked']];
+  let lx = 8;
+  for (const [st, lab] of leg) {
+    ctx.fillStyle = STATUS_COLOR[st];
+    ctx.fillRect(lx, H - 14, 8, 8);
+    ctx.fillStyle = '#607080';
+    ctx.fillText(lab, lx + 11, H - 6);
+    lx += 65;
+  }
+}
+
+let routeMode = 'infantry';
+
+document.querySelectorAll('#mode-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    routeMode = btn.dataset.mode;
+    document.querySelectorAll('#mode-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+document.getElementById('btn-route').addEventListener('click', () => {
+  const startId = document.getElementById('route-start').value;
+  const endId   = document.getElementById('route-end').value;
+  const graph   = { ...DEMO_GRAPH, mode: routeMode, startId, endId };
+  const result  = aStar(graph);
+  const out     = document.getElementById('route-output');
+
+  if (result.path === null) {
+    out.textContent = t('routeNone');
+    out.className   = 'output error';
+    drawRouteGraph([]);
+  } else {
+    const nodeMap = Object.fromEntries(DEMO_GRAPH.nodes.map(n => [n.id, n]));
+    const labels  = result.path.map(id => nodeMap[id]?.label || id);
+    out.textContent = labels.join(' → ') + `  (cost: ${result.cost.toFixed(1)})`;
+    out.className   = 'output';
+    drawRouteGraph(result.path);
+  }
+});
+
+populateNodeSelects();
+drawRouteGraph();
+
+// ── Panel A: Codec ────────────────────────────────────────────────────────
+document.getElementById('btn-encode').addEventListener('click', () => {
+  const out = document.getElementById('encode-output');
+  try {
+    const record = {
+      id:      document.getElementById('codec-id').value.trim() || 'BLD001',
+      lat:     parseFloat(document.getElementById('codec-lat').value),
+      lon:     parseFloat(document.getElementById('codec-lon').value),
+      status:  document.getElementById('codec-status').value,
+      heightM: parseInt(document.getElementById('codec-height').value, 10),
+      anomaly: document.getElementById('codec-anomaly').checked,
+    };
+    const wire = encode(record);
+    out.textContent = wire;
+    out.className   = 'output';
+    document.getElementById('codec-wire').value = wire;
+  } catch (e) {
+    out.textContent = '⚠️ ' + e.message;
+    out.className   = 'output error';
+  }
+});
+
+document.getElementById('btn-decode').addEventListener('click', () => {
+  const out  = document.getElementById('decode-output');
+  const wire = document.getElementById('codec-wire').value.trim();
+  try {
+    const record = decode(wire);
+    out.textContent = formatDecoded(record);
+    out.className   = 'output';
+  } catch (e) {
+    out.textContent = '⚠️ ' + e.message;
+    out.className   = 'output error';
+  }
+});
+
+// ── Panel A: Modem ────────────────────────────────────────────────────────
+let audioCtx = null;
+
+function modemLog(msg, type = '') {
+  const el = document.getElementById('modem-log');
+  const line = document.createElement('div');
+  line.style.color = type === 'ok'  ? 'var(--neon-green)'
+                   : type === 'err' ? 'var(--neon-red)'
+                   : type === 'rx'  ? 'var(--neon-blue)'
+                   : 'var(--text-dim)';
+  line.textContent = `[${new Date().toISOString().slice(11, 19)}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioContext();
+  return audioCtx;
+}
+
+document.getElementById('btn-tx').addEventListener('click', async () => {
+  const text = document.getElementById('modem-text').value;
+  if (!text) return;
+  try {
+    const samples = generateWaveform(text);
+    const ctx     = getAudioCtx();
+    const buf     = ctx.createBuffer(1, samples.length, SAMPLE_RATE);
+    buf.copyToChannel(samples, 0);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+    modemLog(`TX: "${text}" — ${samples.length} samples @ ${SAMPLE_RATE} Hz`, 'ok');
+  } catch (e) {
+    modemLog('TX error: ' + e.message, 'err');
+  }
+});
+
+document.getElementById('btn-rx').addEventListener('click', async () => {
+  try {
+    const stream  = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const ctx     = getAudioCtx();
+    const source  = ctx.createMediaStreamSource(stream);
+    const bufSize = 4096;
+    const proc    = ctx.createScriptProcessor(bufSize, 1, 1);
+    const chunks  = [];
+
+    modemLog('RX: listening… (click again to stop)', 'rx');
+    const btn = document.getElementById('btn-rx');
+    btn.textContent = 'Stop RX';
+    btn.classList.add('danger');
+
+    proc.onaudioprocess = e => {
+      chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+    source.connect(proc);
+    proc.connect(ctx.destination);
+
+    btn.onclick = () => {
+      proc.disconnect();
+      source.disconnect();
+      stream.getTracks().forEach(t => t.stop());
+      btn.textContent = t('btnReceive');
+      btn.classList.remove('danger');
+      btn.onclick = null;
+      btn.addEventListener('click', arguments.callee);
+
+      const total = chunks.reduce((n, c) => n + c.length, 0);
+      const merged = new Float32Array(total);
+      let off = 0;
+      for (const c of chunks) { merged.set(c, off); off += c.length; }
+
+      const { text: decoded, ok, error } = decodeWaveform(merged);
+      if (ok) {
+        modemLog(`RX decoded: "${decoded}"`, 'rx');
+      } else {
+        modemLog(`RX: ${error}`, 'err');
+      }
+    };
+  } catch (e) {
+    modemLog('RX error: ' + e.message, 'err');
+  }
+});
+
+document.getElementById('btn-offline-test').addEventListener('click', () => {
+  const text    = document.getElementById('modem-text').value || 'VZ2026:TEST';
+  const samples = generateWaveform(text);
+  const { text: decoded, ok, error } = decodeWaveform(samples);
+  if (ok) {
+    modemLog(`Offline test TX "${text}" → RX "${decoded}" ✓`, 'ok');
+  } else {
+    modemLog(`Offline test failed: ${error}`, 'err');
+  }
+});
+
+// ── Panel B: Digital Twin / Shadow ────────────────────────────────────────
+function drawShadow(azimuthDeg, shadowLengthFactor, altitudeDeg, belowHorizon, heightM) {
+  const canvas = document.getElementById('shadow-canvas');
+  const ctx    = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+
+  // Ground grid
+  ctx.strokeStyle = '#1a2a3a';
+  ctx.lineWidth   = 1;
+  for (let x = 0; x < W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // North indicator
+  ctx.fillStyle   = '#607080';
+  ctx.font        = '10px Courier New';
+  ctx.textAlign   = 'right';
+  ctx.fillText('N↑', W - 6, 14);
+
+  if (belowHorizon) {
+    ctx.fillStyle   = '#ffd700';
+    ctx.font        = '12px Courier New';
+    ctx.textAlign   = 'center';
+    ctx.fillText('☽ Below horizon — no shadow', cx, cy);
+    return;
+  }
+
+  // Building footprint (square)
+  const bSize = Math.min(heightM * 0.8, 30);
+  ctx.fillStyle   = '#2a4060';
+  ctx.strokeStyle = '#00c8ff';
+  ctx.lineWidth   = 1.5;
+  ctx.fillRect(cx - bSize / 2, cy - bSize / 2, bSize, bSize);
+  ctx.strokeRect(cx - bSize / 2, cy - bSize / 2, bSize, bSize);
+
+  // Shadow — direction is opposite of sun (azimuth + 180°)
+  // Azimuth is clockwise from north; canvas: north = up (-Y)
+  const shadowDir = (azimuthDeg + 180) % 360;
+  const rad       = (shadowDir - 90) * Math.PI / 180; // convert to canvas angle
+  const maxLen    = Math.min(shadowLengthFactor * 4, 90); // scale for display
+  const sx        = cx + Math.cos(rad) * maxLen;
+  const sy        = cy + Math.sin(rad) * maxLen;
+
+  // Shadow polygon (tapered from building edge)
+  const perpRad = rad + Math.PI / 2;
+  const halfW   = bSize / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx + Math.cos(perpRad) * halfW, cy + Math.sin(perpRad) * halfW);
+  ctx.lineTo(cx - Math.cos(perpRad) * halfW, cy - Math.sin(perpRad) * halfW);
+  ctx.lineTo(sx - Math.cos(perpRad) * 3,     sy - Math.sin(perpRad) * 3);
+  ctx.lineTo(sx + Math.cos(perpRad) * 3,     sy + Math.sin(perpRad) * 3);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fill();
+
+  // Sun direction arrow
+  const sunRad = (azimuthDeg - 90) * Math.PI / 180;
+  const arrLen = 40;
+  const ax = cx + Math.cos(sunRad) * arrLen;
+  const ay = cy + Math.sin(sunRad) * arrLen;
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(ax, ay);
+  ctx.stroke();
+  ctx.fillStyle = '#ffd700';
+  ctx.font      = '11px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('☀', ax, ay - 4);
+}
+
+document.getElementById('btn-shadow').addEventListener('click', () => {
+  const lat    = parseFloat(document.getElementById('shadow-lat').value);
+  const lon    = parseFloat(document.getElementById('shadow-lon').value);
+  const height = parseInt(document.getElementById('shadow-height').value, 10);
+  const date   = new Date(document.getElementById('shadow-date').value);
+  const hour   = parseInt(document.getElementById('shadow-hour').value, 10);
+  const out    = document.getElementById('shadow-output');
+
+  if (isNaN(lat) || isNaN(lon) || isNaN(height) || isNaN(hour) || isNaN(date)) {
+    out.textContent = '⚠️ Invalid input';
+    out.className   = 'output error';
+    return;
+  }
+
+  const { azimuthDeg, altitudeDeg, shadowLengthFactor, belowHorizon }
+    = buildingShadow(lat, lon, date, hour, height);
+
+  drawShadow(azimuthDeg, shadowLengthFactor, altitudeDeg, belowHorizon, height);
+
+  if (belowHorizon) {
+    out.textContent = `Sun altitude: ${altitudeDeg.toFixed(1)}° (below horizon)`;
+    out.className   = 'output warn';
+  } else {
+    out.textContent =
+      `Sun: az ${azimuthDeg.toFixed(1)}°  alt ${altitudeDeg.toFixed(1)}°\n` +
+      `Shadow length: ${shadowLengthFactor.toFixed(1)} m per 1 m height\n` +
+      `For ${height} m building: ${(shadowLengthFactor * height).toFixed(1)} m shadow`;
+    out.className = 'output';
+  }
+});
+
+// Draw an initial shadow on load
+drawShadow(220, 8, 30, false, 15);
+
+// ── Panel D: Orbit ────────────────────────────────────────────────────────
+// Loads TLE snapshot from local file (no external API call at runtime).
+const orbitEl     = document.getElementById('orbit-status');
+const orbitPasses = document.getElementById('orbit-passes');
+const orbitMeta   = document.getElementById('orbit-meta');
+const AOI_LAT = 10.48, AOI_LON = -66.88;
+
+function renderOrbit() {
+  const result = getNextPassDisplay(AOI_LAT, AOI_LON);
+
+  if (result.state !== ORBIT_STATE.LOADED) {
+    orbitEl.textContent = result.error ? `⚠️ ${result.error}` : t('orbitNoData');
+    orbitEl.className   = 'output warn';
+    orbitEl.style.display = '';
+    return;
+  }
+
+  orbitEl.style.display = 'none';
+  orbitPasses.innerHTML = '';
+
+  if (result.passes.length === 0) {
+    const d = document.createElement('div');
+    d.className = 'output warn';
+    d.textContent = '⚠️ No passes found in next 3 days above 5° elevation.';
+    orbitPasses.appendChild(d);
+    return;
+  }
+
+  for (const p of result.passes) {
+    const rise   = new Date(p.riseMs).toISOString().replace('T',' ').slice(0,16) + ' UTC';
+    const set    = new Date(p.setMs ).toISOString().replace('T',' ').slice(0,16) + ' UTC';
+    const durMin = Math.round((p.setMs - p.riseMs) / 60000);
+    const d = document.createElement('div');
+    d.className   = 'output';
+    d.style.fontSize = '11px';
+    d.innerHTML =
+      `<span style="color:var(--neon-blue)">▶ Rise: ${rise}</span>\n` +
+      `  Peak: <span style="color:var(--neon-green)">${p.peakElevDeg.toFixed(1)}°</span>` +
+      `  Duration: ~${durMin} min\n` +
+      `  Set:  ${set}`;
+    orbitPasses.appendChild(d);
+  }
+
+  orbitMeta.textContent =
+    `${result.satName} · TLE epoch: ${result.epochDate} · AOI ${AOI_LAT}°N ${Math.abs(AOI_LON)}°W · min elev 5°`;
+}
+
+loadTLE().then(renderOrbit);
+
+// ── Panel D: Anomaly Audit ────────────────────────────────────────────────
+const anomalies = [];
+
+document.getElementById('btn-anomaly').addEventListener('click', () => {
+  const id   = document.getElementById('anomaly-id').value.trim();
+  const desc = document.getElementById('anomaly-desc').value.trim();
+  if (!id) return;
+
+  anomalies.push({ id, desc, ts: new Date().toISOString() });
+  document.getElementById('anomaly-id').value   = '';
+  document.getElementById('anomaly-desc').value = '';
+
+  renderAnomalies();
+});
+
+function renderAnomalies() {
+  const list = document.getElementById('anomaly-list');
+  list.innerHTML = '';
+  if (anomalies.length === 0) return;
+
+  // Update the "no anomalies" label
+  document.querySelector('[data-i18n-key="anomalyNone"]').textContent =
+    t('anomalyFlagged');
+
+  for (const a of anomalies) {
+    const entry       = document.createElement('div');
+    entry.className   = 'anomaly-entry';
+    entry.textContent = `[${a.ts.slice(0, 19).replace('T', ' ')}] ${a.id}: ${a.desc || '(no description)'}`;
+    list.appendChild(entry);
+  }
+}
+
+</script>
+</body>
+</html>
