@@ -1,5 +1,12 @@
 # Venezuela Earthquake Companion Desk — EMSR884
 
+**🌐 Live demo: [https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/)**
+
+| Tool | Link |
+|------|------|
+| 🗺️ Yin-renlong's Damage Assessment Map | [venezuela-earthquake-copernicus-data-dashboard-2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12) |
+| 🛠️ This Companion Desk (field tool) | [vrkkao-eng.github.io/venezuela-earthquake-companion-desk](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/) |
+
 > **This is a draft and an idea. Take it, modify it, ship it. Every minute matters.**
 > *歡迎取用修改，搶救人命，讓我們人類再次偉大而可貴。*
 
