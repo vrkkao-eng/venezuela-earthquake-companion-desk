@@ -1,82 +1,136 @@
 # Venezuela Earthquake Companion Desk — EMSR884
 
-**🌐 Live demo: [https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/)**
+**Offline-first decision-support prototype for low-connectivity emergency scenarios.**
 
-| Tool | Link |
-|------|------|
-| 🗺️ Yin-renlong's Damage Assessment Map | [venezuela-earthquake-copernicus-data-dashboard-2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12) |
-| 🛠️ This Companion Desk (field tool) | [vrkkao-eng.github.io/venezuela-earthquake-companion-desk](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/) |
+🌐 **[Live demo](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/)**
 
-> **This is a draft and an idea. Take it, modify it, ship it. Every minute matters.**
-> *歡迎取用修改，搶救人命，讓我們人類再次偉大而可貴。*
+![Status](https://img.shields.io/badge/Status-Research%20%2F%20Portfolio%20Prototype-orange)
+![Architecture](https://img.shields.io/badge/Architecture-Offline--first-blue)
+![License](https://img.shields.io/badge/License-CC0-green)
 
----
+This project explores how a browser-based field tool could continue to provide useful functions when connectivity is intermittent, bandwidth is constrained, and missing data must be made explicit rather than hidden behind plausible-looking output.
 
-## Acknowledgement
+It is built around the **Copernicus EMSR884 Venezuela earthquake scenario** and complements, rather than replaces, official emergency-management products.
 
-This project was inspired by and built upon the encouragement of **[Yin-renlong](https://github.com/yin-renlong)**, whose interactive damage-assessment map for the Venezuela earthquake is genuinely impressive work — clear, fast, and built for the people who need it most.
+> **Safety note:** this is a research and portfolio prototype. It is not certified, operationally validated, or intended to direct real emergency-response decisions.
 
-His dashboard — **[🗺️ Venezuela Earthquake Copernicus Data Dashboard 2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12)** — made me wonder: what if there were a companion tool on the *field* side — something a rescue team could carry offline, without relying on a server or a stable connection? That question is what this repo tries to answer, however roughly.
+## What this project demonstrates
 
-Thank you, Yin-renlong. The map is excellent. This is just one more layer trying to be useful.
+| Engineering area | Evidence in the repository |
+| --- | --- |
+| **Constraint-driven system design** | Modules are shaped around offline use, low bandwidth, explicit missing-data states, and operator-entered information |
+| **Compact data representation** | Fixed-width 32-character building-record codec with signed coordinates, status, height, anomaly flag, and checksum handling |
+| **Algorithmic routing** | A* pathfinding over a terrain graph with different cost models for infantry and armored modes |
+| **Signal-processing prototype** | Bell-202-style AFSK waveform generation and offline TX→RX decoding tests |
+| **Geospatial / physical modelling** | Solar-position and building-shadow calculations from location, date, time, and height |
+| **Orbital calculation** | SGP4-based satellite-pass logic using a bundled Sentinel-1A TLE snapshot |
+| **Human-in-the-loop design** | Anomaly flags are entered by operators; the project deliberately avoids social-media scraping |
+| **Internationalisation** | Runtime UI switching across English, Spanish, French, Italian, and Chinese |
+| **Testing discipline** | Behavioural tests for codec, routing, modem, solar/shadow, orbit state, and i18n modules |
 
----
+## Architecture
 
-## What This Is
+```mermaid
+flowchart TD
+    U[Field user / browser] --> UI[Single-page offline-first interface]
 
-**Venezuela Earthquake Companion Desk** is an offline-first, single-HTML-file tool for field teams responding to [EMSR884](https://rapidmapping.emergency.copernicus.eu/EMSR884) — the Copernicus Emergency Management Service activation following the **7.5 Mw earthquake near Caracas on 24 June 2026** (100+ fatalities, widespread structural damage).
+    UI --> A[Building record codec]
+    A --> M[AFSK TX / RX prototype]
 
-It runs entirely in the browser with no server dependency after the initial cache sync. Every module assumes the team has pre-downloaded the necessary data before leaving the depot.
+    UI --> R[A* routing worker]
+    R --> RG[Pre-synced terrain graph]
 
----
+    UI --> S[Solar + shadow model]
+    S --> BR[Building record / height]
+
+    UI --> O[Satellite revisit module]
+    O --> TLE[Bundled TLE snapshot]
+
+    UI --> H[Operator-entered anomaly audit]
+    UI --> I18N[Runtime i18n]
+
+    C[Pre-synced / local data] --> UI
+```
+
+The architecture deliberately avoids a server dependency for core runtime behaviour after the required data has been prepared locally.
+
+## Design constraints
+
+Three design decisions shape the repository:
+
+1. **Offline-first means pre-synced data, not magical zero-network operation.**  
+   Road graphs, TLE snapshots, building information, and other external inputs must be prepared before field use.
+
+2. **Missing data stays visible.**  
+   A module should expose an unavailable-data state rather than fabricate a countdown, coordinate, route, or confidence signal.
+
+3. **Operator input stays distinguishable from external evidence.**  
+   The anomaly-audit module uses manually entered flags and does not scrape Telegram, X/Twitter, or other social platforms.
+
+These are design principles for the prototype, not evidence of operational emergency-response validation.
 
 ## Modules
 
-| Module | What it does |
-|--------|-------------|
-| **A — Codec** | Encodes building assessment records into 32-character fixed-width strings for transmission over low-bandwidth radio. Decode recovers signed lat/lon, status, and height — no coordinate loss. |
-| **A — AFSK Modem** | Bell-202-style audio FSK modem. TX generates a waveform playable through any speaker; RX decodes from microphone input. Offline TX→RX round-trip test built in. |
-| **B — Digital Twin / Shadow** | Calculates real solar position (NOAA equations) from lat/lon/date/hour and renders a top-down shadow for each assessed building. Not decorative — shadow geometry matters for search grids. |
-| **C — Tactical Routing** | A* pathfinding over a terrain graph with separate cost tables for infantry vs. armored vehicles. Blocked zones cost ×100/×10; damaged zones cost ×50/×1. Runs in a Web Worker. |
-| **D — Satellite Revisit** | SGP4 orbital propagator against a bundled Sentinel-1A TLE snapshot. Shows real pass times (rise / peak elevation / set) over the AOI. No fake countdown. |
-| **D — Anomaly Audit** | Operator-entered anomaly flags only. No social media scrapers, no Telegram API. A human fills the form; the flag travels with the building record. |
-| **i18n** | Five languages: English, Spanish, French, Italian, Chinese. All UI strings bound via `data-i18n-key`; switch instantly at runtime. |
+| Module | Purpose | Verification evidence |
+| --- | --- | --- |
+| **Codec** | Encode/decode building assessments into a 32-character fixed-width wire format | Round-trip tests include signed coordinates, boundary values, anomaly flags, wrong length, and checksum corruption |
+| **AFSK modem** | Convert a short text payload to/from an audio waveform | Offline generated-waveform → decoder round-trip tests; silence must fail preamble detection |
+| **Digital twin / shadow** | Compute solar position and building-shadow geometry | Tests cover equinox/noon, winter sun, day/night state, and relative shadow length |
+| **Routing** | Run A* against a terrain graph with mode-specific costs | Behavioural tests check known paths, damaged/blocked terrain, disconnected graphs, and mode divergence |
+| **Satellite revisit** | Work with a bundled Sentinel-1A TLE and SGP4 logic | Tests explicitly check honest no-data behaviour and absence of fabricated countdown fields |
+| **Anomaly audit** | Record operator-entered anomaly flags | Human-entered only; no social-media ingestion |
+| **i18n** | Switch the UI between five languages | Dictionary/UI-binding tests are included |
 
----
+## Higher-risk modules and verification boundary
 
-## Architecture Constraints (non-negotiable)
+The repository treats **routing** and the **building-record codec** as higher-risk components because incorrect output could have serious consequences if someone tried to use the prototype operationally.
 
-Three decisions made early that will not be revisited:
+Both include behavioural test suites, and the repository contains separate verifier-workflow pass markers under:
 
-1. **Offline = pre-synced cache, not zero-network.** Every external dependency (road graphs, TLE snapshots, building heights) is assumed to be downloaded before departure. No `fetch()` to external APIs at runtime.
-
-2. **No social media scraping.** Crowd-sourced anomaly data comes from the in-app operator form — never from Telegram, X/Twitter, or any bot API.
-
-3. **Missing data is shown honestly.** If a module lacks real data, it says so explicitly (e.g., `⚠️ Orbital data not loaded`). It never substitutes a plausible-looking constant and presents it as a computed result. Code that lies is more dangerous than code that admits uncertainty.
-
----
-
-## Running Locally
-
-```bash
-# Requires Python 3 or Node.js
-python -m http.server 8080
-# then open http://localhost:8080
+```text
+.claude/verification/codec.pass
+.claude/verification/routing.pass
 ```
 
-ES modules require HTTP — opening `index.html` directly as a `file://` URL will fail due to CORS restrictions.
+These markers document a separate adversarial verification workflow used during development. They are **not third-party certification, independent safety validation, or evidence that the software is fit for field deployment**.
 
----
+## 5-minute walkthrough
 
-## Field-Critical Modules
+For a recruiter or technical reviewer, the fastest path through the project is:
 
-`modules/routing/` and `modules/codec/` are tagged **field-critical**: wrong output from either could send a rescue team to the wrong location or garble a coordinate in transit. Both have passed independent adversarial verification (`field-critical-verifier` protocol) with behavioural test suites — not just "runs without throwing."
+1. Open the **[live demo](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/)**.
+2. Inspect `modules/codec/codec.js` and `codec.test.js` for the compact record / checksum design.
+3. Inspect `modules/routing/routing-worker.js` and `routing.test.js` for the A* implementation and mode-dependent costs.
+4. Inspect `modules/modem/` for the offline waveform round-trip prototype.
+5. Inspect `modules/digital-twin/solar.js` and its tests for physical-model calculations.
+6. Review `docs/data-contracts/` for explicit JSON schemas around building records, wire format, and routing graphs.
 
----
+The project is most useful as evidence of **translating operational constraints into modular, testable software components**.
 
-## Refreshing the TLE Snapshot
+## Data contracts
 
-The Sentinel-1A TLE bundled in `modules/orbit/data/tle-snapshot.txt` is accurate for approximately 7 days from its fetch date. To refresh:
+The repository includes explicit schemas for:
+
+- `docs/data-contracts/building-record.schema.json`
+- `docs/data-contracts/codec-wire-format.schema.json`
+- `docs/data-contracts/routing-graph.schema.json`
+
+This keeps the interfaces between modules inspectable rather than relying only on implicit JavaScript object shapes.
+
+## Running locally
+
+```bash
+python -m http.server 8080
+# open http://localhost:8080
+```
+
+The browser application uses ES modules, so serving it over HTTP is more reliable than opening `index.html` directly with a `file://` URL.
+
+## Satellite-data freshness
+
+The satellite module uses a bundled TLE snapshot. TLE data is time-sensitive and should not be treated as indefinitely current.
+
+To refresh the Sentinel-1A snapshot:
 
 ```bash
 curl "https://tle.ivanstanojevic.me/api/tle/39634" \
@@ -84,18 +138,39 @@ curl "https://tle.ivanstanojevic.me/api/tle/39634" \
   > modules/orbit/data/tle-snapshot.txt
 ```
 
-Then update the `# Fetched:` and `# Valid for:` header comments in that file.
+After refreshing, update the metadata comments in the snapshot file.
 
----
+## Scope and limitations
 
-## Status
+This repository is intentionally a **prototype**, not an operational emergency-response system.
 
-This is a **draft**. It is not certified, not audited, and not a substitute for official Copernicus products or trained emergency management systems. It is an idea, written in good faith, offered freely.
+It has not been:
 
-If you are a developer, GIS specialist, or emergency responder and you see something that could be better — please make it better. Fork it. Fix it. Ship it to someone who needs it.
+- certified for emergency use;
+- independently safety-audited;
+- integrated with official dispatch or command systems;
+- validated against a real rescue-team workflow; or
+- shown to meet any emergency-management standard.
 
----
+The routing cost model is a prototype model. The modem tests use generated waveforms rather than field radio hardware. Satellite results depend on TLE freshness and model assumptions. Pre-synced datasets can become stale. Human-entered anomaly flags require human judgment.
+
+The project should therefore be read as a systems-design and engineering portfolio artifact.
+
+## Project origin and acknowledgement
+
+The project was inspired by **[Yin-renlong](https://github.com/yin-renlong)** and his **[Venezuela Earthquake Copernicus Data Dashboard 2026](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12)**.
+
+That dashboard prompted a different engineering question: what might a companion tool look like on the field side when connectivity cannot be assumed?
+
+| Tool | Role |
+| --- | --- |
+| [Yin-renlong's damage-assessment map](https://yin-renlong.github.io/venezuela-earthquake-copernicus-data-dashboard-2026/?aoi=12) | Map / damage-assessment context |
+| [This Companion Desk](https://vrkkao-eng.github.io/venezuela-earthquake-companion-desk/) | Offline-first field-side prototype |
+
+## Engineering profile
+
+See **[docs/engineering-profile.md](docs/engineering-profile.md)** for a concise recruiter-facing interpretation of the project, including a CV-ready description and the distinction between demonstrated capabilities and operational claims.
 
 ## License
 
-Public domain / [CC0](https://creativecommons.org/publicdomain/zero/1.0/). Do whatever you need to do.
+Public domain / [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
